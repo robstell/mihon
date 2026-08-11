@@ -334,10 +334,13 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
             val holder = (currentPage as? ReaderPage)?.let(::getPageHolder)
 
             if (holder != null && config.navigateToPan) {
+                val isL2R = this is L2RPagerViewer
                 if (holder.canPanRight()) {
                     holder.panRight()
-                } else if (holder.canPanDown()) {
+                } else if (isL2R && holder.canPanDown()) {
                     holder.panDownAndLeftEdge()
+                } else if (!isL2R && holder.canPanUp()) {
+                    holder.panUpAndLeftEdge()
                 } else {
                     pager.setCurrentItem(pager.currentItem + 1, config.usePageTransitions)
                 }
@@ -355,10 +358,13 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
             val holder = (currentPage as? ReaderPage)?.let(::getPageHolder)
 
             if (holder != null && config.navigateToPan) {
+                val isL2R = this is L2RPagerViewer
                 if (holder.canPanLeft()) {
                     holder.panLeft()
-                } else if (holder.canPanDown()) {
+                } else if (!isL2R && holder.canPanDown()) {
                     holder.panDownAndRightEdge()
+                } else if (isL2R && holder.canPanUp()) {
+                    holder.panUpAndRightEdge()
                 } else {
                     pager.setCurrentItem(pager.currentItem - 1, config.usePageTransitions)
                 }
