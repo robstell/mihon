@@ -221,24 +221,27 @@ open class ReaderPageImageView @JvmOverloads constructor(
     fun canPanDown(): Boolean = canPan { it.bottom }
 
     /**
-     * Pans the image down by a screen's height worth.
+     * Pans the image down and entirely to the left edge (Carriage Return for Western comics)
      */
-    fun panDown() {
-        pan { center, view -> center.also { it.y += view.height / view.scale } }
+    fun panDownAndLeftEdge() {
+        pan { center, view ->
+            center.also {
+                it.y += view.height / view.scale
+                it.x = (view.width / 2f) / view.scale
+            }
+        }
     }
 
     /**
-     * Pans the image entirely to the left edge (Carriage Return for Western comics)
+     * Pans the image down and entirely to the right edge (Carriage Return for Manga)
      */
-    fun panToLeftEdge() {
-        pan { center, view -> center.also { it.x = (view.width / 2f) / view.scale } }
-    }
-
-    /**
-     * Pans the image entirely to the right edge (Carriage Return for Manga)
-     */
-    fun panToRightEdge() {
-        pan { center, view -> center.also { it.x = view.sWidth - (view.width / 2f) / view.scale } }
+    fun panDownAndRightEdge() {
+        pan { center, view ->
+            center.also {
+                it.y += view.height / view.scale
+                it.x = view.sWidth - (view.width / 2f) / view.scale
+            }
+        }
     }
 
     /**
