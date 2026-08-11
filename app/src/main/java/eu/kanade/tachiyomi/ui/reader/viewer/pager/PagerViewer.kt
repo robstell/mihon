@@ -337,8 +337,7 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
                 if (holder.canPanRight()) {
                     holder.panRight()
                 } else if (holder.canPanDown()) {
-                    holder.panDown()
-                    holder.panToLeftEdge()
+                    holder.panDownAndLeftEdge()
                 } else {
                     pager.setCurrentItem(pager.currentItem + 1, config.usePageTransitions)
                 }
@@ -359,8 +358,7 @@ abstract class PagerViewer(val activity: ReaderActivity) : Viewer {
                 if (holder.canPanLeft()) {
                     holder.panLeft()
                 } else if (holder.canPanDown()) {
-                    holder.panDown()
-                    holder.panToRightEdge()
+                    holder.panDownAndRightEdge()
                 } else {
                     pager.setCurrentItem(pager.currentItem - 1, config.usePageTransitions)
                 }
