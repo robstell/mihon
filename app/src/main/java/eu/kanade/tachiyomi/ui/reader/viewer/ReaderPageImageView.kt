@@ -180,6 +180,16 @@ open class ReaderPageImageView @JvmOverloads constructor(
     fun canPanRight(): Boolean = canPan { it.right }
 
     /**
+     * Check if the image can be panned down
+     */
+    fun canPanDown(): Boolean = canPan { it.bottom }
+
+    /**
+     * Check if the image can be panned up
+     */
+    fun canPanUp(): Boolean = canPan { it.top }
+
+    /**
      * Check whether the image can be panned.
      * @param fn a function that returns the direction to check for
      */
@@ -197,14 +207,62 @@ open class ReaderPageImageView @JvmOverloads constructor(
      * Pans the image to the left by a screen's width worth.
      */
     fun panLeft() {
-        pan { center, view -> center.also { it.x -= view.width / view.scale } }
+        pan { center, view -> center.also { it.x -= (view.width * 0.75f) / view.scale } }
     }
 
     /**
      * Pans the image to the right by a screen's width worth.
      */
     fun panRight() {
-        pan { center, view -> center.also { it.x += view.width / view.scale } }
+        pan { center, view -> center.also { it.x += (view.width * 0.75f) / view.scale } }
+    }
+
+    /**
+     * Pans the image down and entirely to the left edge (Carriage Return for Western comics)
+     */
+    fun panDownAndLeftEdge() {
+        pan { center, view ->
+            center.also {
+                it.y += (view.height * 0.75f) / view.scale
+                it.x = (view.width / 2f) / view.scale
+            }
+        }
+    }
+
+    /**
+     * Pans the image down and entirely to the right edge (Carriage Return for Manga)
+     */
+    fun panDownAndRightEdge() {
+        pan { center, view ->
+            center.also {
+                it.y += (view.height * 0.75f) / view.scale
+                it.x = view.sWidth - (view.width / 2f) / view.scale
+            }
+        }
+    }
+
+    /**
+     * Pans the image up and entirely to the left edge (Reverse Carriage Return)
+     */
+    fun panUpAndLeftEdge() {
+        pan { center, view ->
+            center.also {
+                it.y -= (view.height * 0.75f) / view.scale
+                it.x = (view.width / 2f) / view.scale
+            }
+        }
+    }
+
+    /**
+     * Pans the image up and entirely to the right edge (Reverse Carriage Return)
+     */
+    fun panUpAndRightEdge() {
+        pan { center, view ->
+            center.also {
+                it.y -= (view.height * 0.75f) / view.scale
+                it.x = view.sWidth - (view.width / 2f) / view.scale
+            }
+        }
     }
 
     /**
