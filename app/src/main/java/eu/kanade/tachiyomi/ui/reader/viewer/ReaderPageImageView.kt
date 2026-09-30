@@ -207,14 +207,14 @@ open class ReaderPageImageView @JvmOverloads constructor(
      * Pans the image to the left by a screen's width worth.
      */
     fun panLeft() {
-        pan { center, view -> center.also { it.x -= (view.width * 0.85f) / view.scale } }
+        pan { center, view -> center.also { it.x -= (view.width * 0.75f) / view.scale } }
     }
 
     /**
      * Pans the image to the right by a screen's width worth.
      */
     fun panRight() {
-        pan { center, view -> center.also { it.x += (view.width * 0.85f) / view.scale } }
+        pan { center, view -> center.also { it.x += (view.width * 0.75f) / view.scale } }
     }
 
     /**
@@ -223,7 +223,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
     fun panDownAndLeftEdge() {
         pan { center, view ->
             center.also {
-                it.y += (view.height * 0.85f) / view.scale
+                it.y += (view.height * 0.75f) / view.scale
                 it.x = (view.width / 2f) / view.scale
             }
         }
@@ -235,7 +235,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
     fun panDownAndRightEdge() {
         pan { center, view ->
             center.also {
-                it.y += (view.height * 0.85f) / view.scale
+                it.y += (view.height * 0.75f) / view.scale
                 it.x = view.sWidth - (view.width / 2f) / view.scale
             }
         }
@@ -247,7 +247,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
     fun panUpAndLeftEdge() {
         pan { center, view ->
             center.also {
-                it.y -= (view.height * 0.85f) / view.scale
+                it.y -= (view.height * 0.75f) / view.scale
                 it.x = (view.width / 2f) / view.scale
             }
         }
@@ -259,7 +259,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
     fun panUpAndRightEdge() {
         pan { center, view ->
             center.also {
-                it.y -= (view.height * 0.85f) / view.scale
+                it.y -= (view.height * 0.75f) / view.scale
                 it.x = view.sWidth - (view.width / 2f) / view.scale
             }
         }
