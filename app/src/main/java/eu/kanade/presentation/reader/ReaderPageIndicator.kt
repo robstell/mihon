@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.sp
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.i18n.pluralStringResource
 
 @Composable
 fun ReaderPageIndicator(
@@ -29,7 +29,7 @@ fun ReaderPageIndicator(
 
     val text = if (anchorPage != null && currentPage >= anchorPage) {
         val pagesReadDiff = currentPage - anchorPage
-        val pagesRead = stringResource(MR.strings.action_pages_read, pagesReadDiff)
+        val pagesRead = pluralStringResource(MR.plurals.action_pages_read, pagesReadDiff, pagesReadDiff)
         "$currentPage / $totalPages\n$pagesRead"
     } else {
         "$currentPage / $totalPages"
