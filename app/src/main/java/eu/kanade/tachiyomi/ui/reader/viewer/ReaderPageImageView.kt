@@ -266,6 +266,8 @@ open class ReaderPageImageView @JvmOverloads constructor(
         }
     }
 
+    private var isTypewriterAnimating = false
+
     /**
      * Pans the image.
      * @param fn a function that computes the new center of the image
@@ -275,10 +277,8 @@ open class ReaderPageImageView @JvmOverloads constructor(
         fn: (PointF, SubsamplingScaleImageView) -> PointF,
     ) {
         (pageView as? SubsamplingScaleImageView)?.let { view ->
-
             val currentCenter = view.center ?: return
-            val originalScale = view.scale
-            val target = fn(currentCenter, view)
+            val finalTarget = fn(currentCenter, view)
             if (!useZoomOutSequence) {
                 view.animateCenter(target)!!
                     .withEasing(EASE_OUT_QUAD)
@@ -286,21 +286,60 @@ open class ReaderPageImageView @JvmOverloads constructor(
                     .withInterruptible(true)
                     .start()
             } else {
-                val zoomOutScale = maxOf(view.minScale * 1.3f, (originalScale + view.minScale) / 2f)
+                if (isTypewriterAnimating) return
+                isTypewriterAnimating = true
 
-                view.animateScaleAndCenter(zoomOutScale, target)!!
-                    .withDuration(250)
+                val originalScale = view.scale
+                val safeZoomOutScale = maxOf(view.minScale * 1.05f, view.minScale + 0.01f)
+
+                // ATO 1: ZOOM OUT TOTAL (No mesmo lugar, sem mover lateralmente!)
+                view.animateScaleAndCenter(safeZoomOutScale, currentCenter)!!
+                    .withDuration(200)
                     .withEasing(EASE_IN_OUT_QUAD)
                     .withOnAnimationEventListener(object : OnAnimationEventListener {
+
                         override fun onComplete() {
-                            view.animateScaleAndCenter(originalScale, target)!!
-                                .withDuration(200)
+                            // ATO 2: CARRIAGE RETURN (Viaja rápido para o outro lado enquanto está longe)
+                            view.animateScaleAndCenter(safeZoomOutScale, finalTarget)!!
+                                .withDuration(300) // Mais tempo para a viagem horizontal/vertical
                                 .withEasing(EASE_IN_OUT_QUAD)
+                                .withOnAnimationEventListener(object : OnAnimationEventListener {
+
+                                    override fun onComplete() {
+                                        // ATO 3: ZOOM IN (Mergulha de volta para ler a nova linha)
+                                        view.animateScaleAndCenter(originalScale, finalTarget)!!
+                                            .withDuration(200)
+                                            .withEasing(EASE_IN_OUT_QUAD)
+                                            .withOnAnimationEventListener(object : OnAnimationEventListener {
+                                                override fun onComplete() {
+                                                    isTypewriterAnimating = false
+                                                }
+                                                override fun onInterruptedByUser() {
+                                                    isTypewriterAnimating = false
+                                                }
+                                                override fun onInterruptedByNewAnim() {
+                                                    isTypewriterAnimating = false
+                                                }
+                                            })
+                                            .start()
+                                    }
+
+                                    override fun onInterruptedByUser() {
+                                        isTypewriterAnimating = false
+                                    }
+                                    override fun onInterruptedByNewAnim() {
+                                        isTypewriterAnimating = false
+                                    }
+                                })
                                 .start()
                         }
 
-                        override fun onInterruptedByUser() {}
-                        override fun onInterruptedByNewAnim() {}
+                        override fun onInterruptedByUser() {
+                            isTypewriterAnimating = false
+                        }
+                        override fun onInterruptedByNewAnim() {
+                            isTypewriterAnimating = false
+                        }
                     })
                     .start()
             }
