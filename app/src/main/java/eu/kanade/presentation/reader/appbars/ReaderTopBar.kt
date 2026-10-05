@@ -57,11 +57,9 @@ fun ReaderTopBar(
                         AppBar.Action(
                             title = stringResource(
                                 if (isAnchorActive) {
-                                    // MR.strings.action_remove_anchor
-                                    "Remove anchor"
+                                    MR.strings.action_unpin
                                 } else {
-                                    // MR.strings.action_anchor
-                                    "Anchor"
+                                    MR.strings.action_pin
                                 },
                             ),
                             icon = if (isAnchorActive) {
