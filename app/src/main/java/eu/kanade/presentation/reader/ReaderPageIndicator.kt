@@ -15,6 +15,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.sp
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
+import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
 fun ReaderPageIndicator(
@@ -26,8 +28,9 @@ fun ReaderPageIndicator(
     if (currentPage <= 0 || totalPages <= 0) return
 
     val text = if (anchorPage != null && currentPage >= anchorPage) {
-        val pagesRead = currentPage - anchorPage
-        "$currentPage / $totalPages\n(+$pagesRead pages read)"
+        val pagesReadDiff = currentPage - anchorPage
+        val pagesRead = stringResource(MR.strings.action_pages_read, pagesReadDiff)
+        "$currentPage / $totalPages\n$pagesRead"
     } else {
         "$currentPage / $totalPages"
     }
