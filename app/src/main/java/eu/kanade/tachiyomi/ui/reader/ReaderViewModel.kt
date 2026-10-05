@@ -1,9 +1,11 @@
 package eu.kanade.tachiyomi.ui.reader
 
+import android.app.Application
 import android.content.Context
 import android.net.Uri
 import androidx.annotation.IntRange
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
@@ -89,6 +91,8 @@ import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.source.local.image.LocalCoverManager
 import tachiyomi.source.local.isLocal
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.util.Date
 import kotlin.time.Clock
 
@@ -479,6 +483,8 @@ class ReaderViewModel(
      * [page]'s chapter is different from the currently active.
      */
     fun onPageSelected(page: ReaderPage) {
+        page.chapter.chapter.id?.let { loadAnchor(it) }
+
         // InsertPage doesn't change page progress
         if (page is InsertPage) {
             return
@@ -978,6 +984,35 @@ class ReaderViewModel(
     private fun deletePendingChapters() {
         viewModelScope.launchNonCancellable {
             downloadManager.deletePendingChapters()
+        }
+    }
+
+    private val prefs = Injekt.get<Application>().getSharedPreferences("reader_anchors", Context.MODE_PRIVATE)
+
+    val anchorPage = mutableStateOf<Int?>(null)
+    private var lastAnchorChapterId: Long? = null
+
+    fun loadAnchor(chapterId: Long) {
+        if (lastAnchorChapterId == chapterId) return
+
+        val key = chapterId.toString()
+        if (prefs.contains(key)) {
+            anchorPage.value = prefs.getInt(key, 0)
+        } else {
+            anchorPage.value = null
+        }
+        lastAnchorChapterId = chapterId
+    }
+
+    fun toggleAnchor(chapterId: Long, currentPage: Int) {
+        val key = chapterId.toString()
+
+        if (anchorPage.value == null) {
+            prefs.edit().putInt(key, currentPage).apply()
+            anchorPage.value = currentPage
+        } else {
+            prefs.edit().remove(key).apply()
+            anchorPage.value = null
         }
     }
 
