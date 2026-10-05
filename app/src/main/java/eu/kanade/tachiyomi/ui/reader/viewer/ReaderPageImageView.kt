@@ -286,10 +286,10 @@ open class ReaderPageImageView @JvmOverloads constructor(
                     .withInterruptible(true)
                     .start()
             } else {
-                val zoomOutScale = view.minScale
+                val zoomOutScale = maxOf(view.minScale * 1.3f, (originalScale + view.minScale) / 2f)
 
                 view.animateScaleAndCenter(zoomOutScale, target)!!
-                    .withDuration(300)
+                    .withDuration(250)
                     .withEasing(EASE_IN_OUT_QUAD)
                     .withOnAnimationEventListener(object : OnAnimationEventListener {
                         override fun onComplete() {
