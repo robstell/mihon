@@ -31,6 +31,7 @@ import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.EASE_IN_OUT_QUAD
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.EASE_OUT_QUAD
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.OnAnimationEventListener
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE
 import com.github.chrisbanes.photoview.PhotoView
 import eu.kanade.tachiyomi.data.coil.cropBorders
@@ -221,7 +222,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
      * Pans the image down and entirely to the left edge (Carriage Return for Western comics)
      */
     fun panDownAndLeftEdge() {
-        pan { center, view ->
+        pan(useZoomOutSequence = true) { center, view ->
             center.also {
                 it.y += (view.height * 0.75f) / view.scale
                 it.x = (view.width / 2f) / view.scale
@@ -233,7 +234,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
      * Pans the image down and entirely to the right edge (Carriage Return for Manga)
      */
     fun panDownAndRightEdge() {
-        pan { center, view ->
+        pan(useZoomOutSequence = true) { center, view ->
             center.also {
                 it.y += (view.height * 0.75f) / view.scale
                 it.x = view.sWidth - (view.width / 2f) / view.scale
@@ -245,7 +246,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
      * Pans the image up and entirely to the left edge (Reverse Carriage Return)
      */
     fun panUpAndLeftEdge() {
-        pan { center, view ->
+        pan(useZoomOutSequence = true) { center, view ->
             center.also {
                 it.y -= (view.height * 0.75f) / view.scale
                 it.x = (view.width / 2f) / view.scale
@@ -257,7 +258,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
      * Pans the image up and entirely to the right edge (Reverse Carriage Return)
      */
     fun panUpAndRightEdge() {
-        pan { center, view ->
+        pan(useZoomOutSequence = true) { center, view ->
             center.also {
                 it.y -= (view.height * 0.75f) / view.scale
                 it.x = view.sWidth - (view.width / 2f) / view.scale
@@ -269,15 +270,54 @@ open class ReaderPageImageView @JvmOverloads constructor(
      * Pans the image.
      * @param fn a function that computes the new center of the image
      */
-    private fun pan(fn: (PointF, SubsamplingScaleImageView) -> PointF) {
+    private fun pan(
+        useZoomOutSequence: Boolean = false,
+        fn: (PointF, SubsamplingScaleImageView) -> PointF,
+    ) {
         (pageView as? SubsamplingScaleImageView)?.let { view ->
 
-            val target = fn(view.center ?: return, view)
-            view.animateCenter(target)!!
-                .withEasing(EASE_OUT_QUAD)
-                .withDuration(250)
-                .withInterruptible(true)
-                .start()
+            val currentCenter = view.center ?: return
+            val originalScale = view.scale
+            val target = fn(currentCenter, view)
+            if (!useZoomOutSequence) {
+                view.animateCenter(target)!!
+                    .withEasing(EASE_OUT_QUAD)
+                    .withDuration(250)
+                    .withInterruptible(true)
+                    .start()
+            } else {
+                val zoomOutScale = view.minScale
+
+                // Ato 1: Zoom Out mantendo a câmera no ponto de leitura atual
+                view.animateScaleAndCenter(zoomOutScale, currentCenter)!!
+                    .withDuration(150)
+                    .withEasing(EASE_IN_OUT_QUAD)
+                    .withOnAnimationEventListener(object : OnAnimationEventListener {
+                        override fun onComplete() {
+                            // Ato 2: Move a câmera (Pan) para a próxima linha já calculada
+                            view.animateScaleAndCenter(zoomOutScale, target)!!
+                                .withDuration(250)
+                                .withEasing(EASE_IN_OUT_QUAD)
+                                .withOnAnimationEventListener(object : OnAnimationEventListener {
+                                    override fun onComplete() {
+                                        // Ato 3: Zoom In voltando ao nível que o leitor gosta
+                                        view.animateScaleAndCenter(originalScale, target)!!
+                                            .withDuration(150)
+                                            .withEasing(EASE_IN_OUT_QUAD)
+                                            .start()
+                                    }
+
+                                    override fun onInterruptedByUser() {}
+                                    override fun onInterruptedByNewAnim() {}
+                                })
+                                .start()
+                        }
+
+                        override fun onInterruptedByUser() {}
+                        override fun onInterruptedByNewAnim() {}
+                    })
+                    .start()
+            }
         }
     }
 
