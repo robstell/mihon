@@ -7,7 +7,9 @@ import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Bookmark
+import mihon.icons.materialsymbols.rounded.PushPin
 import mihon.icons.materialsymbols.roundedfilled.Bookmark
+import mihon.icons.materialsymbols.roundedfilled.PushPin
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
@@ -18,6 +20,8 @@ fun ReaderTopBar(
     navigateUp: () -> Unit,
     bookmarked: Boolean,
     onToggleBookmarked: () -> Unit,
+    isAnchorActive: Boolean,
+    onToggleAnchor: () -> Unit,
     onOpenInWebView: (() -> Unit)?,
     onOpenInBrowser: (() -> Unit)?,
     onShare: (() -> Unit)?,
@@ -47,6 +51,23 @@ fun ReaderTopBar(
                                 MaterialSymbols.Rounded.Bookmark
                             },
                             onClick = onToggleBookmarked,
+                        ),
+                    )
+                    add(
+                        AppBar.Action(
+                            title = stringResource(
+                                if (isAnchorActive) {
+                                    MR.strings.action_unpin
+                                } else {
+                                    MR.strings.action_pin
+                                },
+                            ),
+                            icon = if (isAnchorActive) {
+                                MaterialSymbols.RoundedFilled.PushPin
+                            } else {
+                                MaterialSymbols.Rounded.PushPin
+                            },
+                            onClick = onToggleAnchor,
                         ),
                     )
                     onOpenInWebView?.let {

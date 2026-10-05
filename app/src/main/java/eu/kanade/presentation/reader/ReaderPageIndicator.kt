@@ -11,19 +11,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.sp
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
+import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.i18n.pluralStringResource
 
 @Composable
 fun ReaderPageIndicator(
     currentPage: Int,
     totalPages: Int,
+    anchorPage: Int? = null,
     modifier: Modifier = Modifier,
 ) {
     if (currentPage <= 0 || totalPages <= 0) return
 
-    val text = "$currentPage / $totalPages"
+    val text = if (anchorPage != null && currentPage >= anchorPage) {
+        val pagesReadDiff = currentPage - anchorPage
+        val pagesRead = pluralStringResource(MR.plurals.action_pages_read, pagesReadDiff, pagesReadDiff)
+        "$currentPage / $totalPages\n$pagesRead"
+    } else {
+        "$currentPage / $totalPages"
+    }
 
     val style = TextStyle(
         color = Color(235, 235, 235),
@@ -43,10 +53,12 @@ fun ReaderPageIndicator(
         Text(
             text = text,
             style = strokeStyle,
+            textAlign = TextAlign.Center,
         )
         Text(
             text = text,
             style = style,
+            textAlign = TextAlign.Center,
         )
     }
 }

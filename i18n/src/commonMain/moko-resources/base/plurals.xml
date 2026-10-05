@@ -114,4 +114,8 @@
         <item quantity="one">%1$d update failed</item>
         <item quantity="other">%1$d updates failed</item>
     </plurals>
+    <plurals name="action_pages_read">
+        <item quantity="one">(%1$d page read)</item>
+        <item quantity="other">(%1$d pages read)</item>
+    </plurals>
 </resources>

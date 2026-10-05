@@ -31,6 +31,7 @@ import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.EASE_IN_OUT_QUAD
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.EASE_OUT_QUAD
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.OnAnimationEventListener
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE
 import com.github.chrisbanes.photoview.PhotoView
 import eu.kanade.tachiyomi.data.coil.cropBorders
@@ -180,6 +181,16 @@ open class ReaderPageImageView @JvmOverloads constructor(
     fun canPanRight(): Boolean = canPan { it.right }
 
     /**
+     * Check if the image can be panned down
+     */
+    fun canPanDown(): Boolean = canPan { it.bottom }
+
+    /**
+     * Check if the image can be panned up
+     */
+    fun canPanUp(): Boolean = canPan { it.top }
+
+    /**
      * Check whether the image can be panned.
      * @param fn a function that returns the direction to check for
      */
@@ -197,29 +208,141 @@ open class ReaderPageImageView @JvmOverloads constructor(
      * Pans the image to the left by a screen's width worth.
      */
     fun panLeft() {
-        pan { center, view -> center.also { it.x -= view.width / view.scale } }
+        pan { center, view -> center.also { it.x -= (view.width * 0.75f) / view.scale } }
     }
 
     /**
      * Pans the image to the right by a screen's width worth.
      */
     fun panRight() {
-        pan { center, view -> center.also { it.x += view.width / view.scale } }
+        pan { center, view -> center.also { it.x += (view.width * 0.75f) / view.scale } }
     }
+
+    /**
+     * Pans the image down and entirely to the left edge (Carriage Return for Western comics)
+     */
+    fun panDownAndLeftEdge() {
+        pan(useZoomOutSequence = true) { center, view ->
+            center.also {
+                it.y += (view.height * 0.75f) / view.scale
+                it.x = (view.width / 2f) / view.scale
+            }
+        }
+    }
+
+    /**
+     * Pans the image down and entirely to the right edge (Carriage Return for Manga)
+     */
+    fun panDownAndRightEdge() {
+        pan(useZoomOutSequence = true) { center, view ->
+            center.also {
+                it.y += (view.height * 0.75f) / view.scale
+                it.x = view.sWidth - (view.width / 2f) / view.scale
+            }
+        }
+    }
+
+    /**
+     * Pans the image up and entirely to the left edge (Reverse Carriage Return)
+     */
+    fun panUpAndLeftEdge() {
+        pan(useZoomOutSequence = true) { center, view ->
+            center.also {
+                it.y -= (view.height * 0.75f) / view.scale
+                it.x = (view.width / 2f) / view.scale
+            }
+        }
+    }
+
+    /**
+     * Pans the image up and entirely to the right edge (Reverse Carriage Return)
+     */
+    fun panUpAndRightEdge() {
+        pan(useZoomOutSequence = true) { center, view ->
+            center.also {
+                it.y -= (view.height * 0.75f) / view.scale
+                it.x = view.sWidth - (view.width / 2f) / view.scale
+            }
+        }
+    }
+
+    private var isTypewriterAnimating = false
 
     /**
      * Pans the image.
      * @param fn a function that computes the new center of the image
      */
-    private fun pan(fn: (PointF, SubsamplingScaleImageView) -> PointF) {
+    private fun pan(
+        useZoomOutSequence: Boolean = false,
+        fn: (PointF, SubsamplingScaleImageView) -> PointF,
+    ) {
         (pageView as? SubsamplingScaleImageView)?.let { view ->
+            val currentCenter = view.center ?: return
+            val target = fn(currentCenter, view)
+            if (!useZoomOutSequence) {
+                view.animateCenter(target)!!
+                    .withEasing(EASE_OUT_QUAD)
+                    .withDuration(250)
+                    .withInterruptible(true)
+                    .start()
+            } else {
+                if (isTypewriterAnimating) return
+                isTypewriterAnimating = true
 
-            val target = fn(view.center ?: return, view)
-            view.animateCenter(target)!!
-                .withEasing(EASE_OUT_QUAD)
-                .withDuration(250)
-                .withInterruptible(true)
-                .start()
+                val originalScale = view.scale
+                val safeZoomOutScale = maxOf(view.minScale * 1.05f, view.minScale + 0.01f)
+
+                // ATO 1: ZOOM OUT TOTAL (No mesmo lugar, sem mover lateralmente!)
+                view.animateScaleAndCenter(safeZoomOutScale, currentCenter)!!
+                    .withDuration(200)
+                    .withEasing(EASE_IN_OUT_QUAD)
+                    .withOnAnimationEventListener(object : OnAnimationEventListener {
+
+                        override fun onComplete() {
+                            // ATO 2: CARRIAGE RETURN (Viaja rápido para o outro lado enquanto está longe)
+                            view.animateScaleAndCenter(safeZoomOutScale, target)!!
+                                .withDuration(300) // Mais tempo para a viagem horizontal/vertical
+                                .withEasing(EASE_IN_OUT_QUAD)
+                                .withOnAnimationEventListener(object : OnAnimationEventListener {
+
+                                    override fun onComplete() {
+                                        // ATO 3: ZOOM IN (Mergulha de volta para ler a nova linha)
+                                        view.animateScaleAndCenter(originalScale, target)!!
+                                            .withDuration(200)
+                                            .withEasing(EASE_IN_OUT_QUAD)
+                                            .withOnAnimationEventListener(object : OnAnimationEventListener {
+                                                override fun onComplete() {
+                                                    isTypewriterAnimating = false
+                                                }
+                                                override fun onInterruptedByUser() {
+                                                    isTypewriterAnimating = false
+                                                }
+                                                override fun onInterruptedByNewAnim() {
+                                                    isTypewriterAnimating = false
+                                                }
+                                            })
+                                            .start()
+                                    }
+
+                                    override fun onInterruptedByUser() {
+                                        isTypewriterAnimating = false
+                                    }
+                                    override fun onInterruptedByNewAnim() {
+                                        isTypewriterAnimating = false
+                                    }
+                                })
+                                .start()
+                        }
+
+                        override fun onInterruptedByUser() {
+                            isTypewriterAnimating = false
+                        }
+                        override fun onInterruptedByNewAnim() {
+                            isTypewriterAnimating = false
+                        }
+                    })
+                    .start()
+            }
         }
     }
 
