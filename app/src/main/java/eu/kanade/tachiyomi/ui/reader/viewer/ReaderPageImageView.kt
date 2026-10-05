@@ -278,7 +278,7 @@ open class ReaderPageImageView @JvmOverloads constructor(
     ) {
         (pageView as? SubsamplingScaleImageView)?.let { view ->
             val currentCenter = view.center ?: return
-            val finalTarget = fn(currentCenter, view)
+            val target = fn(currentCenter, view)
             if (!useZoomOutSequence) {
                 view.animateCenter(target)!!
                     .withEasing(EASE_OUT_QUAD)
@@ -300,14 +300,14 @@ open class ReaderPageImageView @JvmOverloads constructor(
 
                         override fun onComplete() {
                             // ATO 2: CARRIAGE RETURN (Viaja rápido para o outro lado enquanto está longe)
-                            view.animateScaleAndCenter(safeZoomOutScale, finalTarget)!!
+                            view.animateScaleAndCenter(safeZoomOutScale, target)!!
                                 .withDuration(300) // Mais tempo para a viagem horizontal/vertical
                                 .withEasing(EASE_IN_OUT_QUAD)
                                 .withOnAnimationEventListener(object : OnAnimationEventListener {
 
                                     override fun onComplete() {
                                         // ATO 3: ZOOM IN (Mergulha de volta para ler a nova linha)
-                                        view.animateScaleAndCenter(originalScale, finalTarget)!!
+                                        view.animateScaleAndCenter(originalScale, target)!!
                                             .withDuration(200)
                                             .withEasing(EASE_IN_OUT_QUAD)
                                             .withOnAnimationEventListener(object : OnAnimationEventListener {
