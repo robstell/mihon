@@ -287,29 +287,16 @@ open class ReaderPageImageView @JvmOverloads constructor(
                     .start()
             } else {
                 val zoomOutScale = view.minScale
-
-                // Ato 1: Zoom Out mantendo a câmera no ponto de leitura atual
-                view.animateScaleAndCenter(zoomOutScale, currentCenter)!!
-                    .withDuration(150)
+                
+                view.animateScaleAndCenter(zoomOutScale, target)!!
+                    .withDuration(300)
                     .withEasing(EASE_IN_OUT_QUAD)
                     .withOnAnimationEventListener(object : OnAnimationEventListener {
                         override fun onComplete() {
-                            // Ato 2: Move a câmera (Pan) para a próxima linha já calculada
-                            view.animateScaleAndCenter(zoomOutScale, target)!!
-                                .withDuration(250)
+                            
+                            view.animateScaleAndCenter(originalScale, target)!!
+                                .withDuration(200)
                                 .withEasing(EASE_IN_OUT_QUAD)
-                                .withOnAnimationEventListener(object : OnAnimationEventListener {
-                                    override fun onComplete() {
-                                        // Ato 3: Zoom In voltando ao nível que o leitor gosta
-                                        view.animateScaleAndCenter(originalScale, target)!!
-                                            .withDuration(150)
-                                            .withEasing(EASE_IN_OUT_QUAD)
-                                            .start()
-                                    }
-
-                                    override fun onInterruptedByUser() {}
-                                    override fun onInterruptedByNewAnim() {}
-                                })
                                 .start()
                         }
 
