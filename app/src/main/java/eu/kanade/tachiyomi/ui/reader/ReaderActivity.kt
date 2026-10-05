@@ -263,6 +263,7 @@ class ReaderActivity : BaseActivity() {
                 ReaderPageIndicator(
                     currentPage = state.currentPage,
                     totalPages = state.totalPages,
+                    anchorPage = viewModel.anchorPage.value,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding(),
@@ -471,6 +472,13 @@ class ReaderActivity : BaseActivity() {
             onClickTopAppBar = ::openMangaScreen,
             bookmarked = state.bookmarked,
             onToggleBookmarked = viewModel::toggleChapterBookmark,
+            isAnchorActive = viewModel.anchorPage.value != null,
+            onToggleAnchor = {
+                state.currentChapter?.chapter?.id?.let { chapterId ->
+                    viewModel.toggleAnchor(chapterId, state.currentPage)
+                }
+            },
+
             onOpenInWebView = ::openChapterInWebView.takeIf { isHttpSource },
             onOpenInBrowser = ::openChapterInBrowser.takeIf { isHttpSource },
             onShare = ::shareChapter.takeIf { isHttpSource },
